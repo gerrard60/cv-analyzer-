@@ -1,0 +1,729 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Tajawal:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title>Interview Architect</title>
+<style>
+/* ─── DESIGN TOKENS ─────────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --night:#0B0F19;--surf:#0F172A;--surf2:#131C35;--surf3:#1A2545;--surf4:#1E2D52;
+  --bdr:#1E2D52;--bdr2:#2A3F6F;
+  --blue:#2563EB;--blue-l:#3B82F6;--blue-g:rgba(37,99,235,.13);
+  --green:#22C55E;--green-l:#4ADE80;--green-g:rgba(34,197,94,.12);
+  --amber:#F59E0B;--red:#EF4444;--purple:#7C3AED;
+  --tx:#F1F5F9;--tx2:#94A3B8;--tx3:#475569;
+  --mono:'JetBrains Mono',monospace;
+}
+body{background:var(--night);color:var(--tx);font-family:'Cairo','Tajawal',sans-serif;
+  font-size:14px;line-height:1.6;min-height:100vh;-webkit-font-smoothing:antialiased}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes slideIn{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:translateX(0)}}
+
+/* ─── NAV ─────────────────────────────────────── */
+.nav{background:rgba(11,15,25,.96);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--bdr);padding:0 22px;height:60px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:50}
+.nav-logo{width:34px;height:34px;border-radius:9px;
+  background:linear-gradient(135deg,var(--blue),var(--purple));
+  display:flex;align-items:center;justify-content:center;
+  font-size:17px;box-shadow:0 0 16px rgba(37,99,235,.4);flex-shrink:0}
+.nav-brand{display:flex;align-items:center;gap:10px}
+.nav-title{font-size:15px;font-weight:800;letter-spacing:-.03em}
+.nav-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sb{display:flex;align-items:center;gap:4px}
+.sp{display:flex;align-items:center;gap:5px;padding:5px 11px;border-radius:20px;
+  border:1px solid var(--bdr);font-size:11px;font-weight:700;color:var(--tx3);
+  cursor:default;transition:.2s;white-space:nowrap;font-family:var(--mono)}
+.sp.active{color:var(--blue-l);border-color:rgba(59,130,246,.4);background:var(--blue-g)}
+.sp.done{color:var(--green);border-color:rgba(34,197,94,.3);cursor:pointer;background:var(--green-g)}
+.sn{width:17px;height:17px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:9px;font-weight:700;background:var(--surf3);
+  color:var(--tx3);transition:.2s}
+.sp.active .sn{background:var(--blue);color:#fff}
+.sp.done .sn{background:var(--green);color:#fff}
+.ss{width:12px;height:1px;background:var(--bdr)}
+.lb{background:var(--surf3);border:1px solid var(--bdr2);border-radius:var(--r2,12px);
+  padding:6px 12px;font-size:12px;font-weight:700;color:var(--tx2);cursor:pointer;
+  display:flex;align-items:center;gap:5px;transition:.2s;font-family:'Cairo',sans-serif}
+.lb:hover{border-color:var(--blue-l);color:var(--tx)}
+.ld{width:5px;height:5px;border-radius:50%;background:var(--green)}
+
+/* ─── LAYOUT ──────────────────────────────────── */
+.wrap{max-width:920px;margin:0 auto;padding:28px 20px 80px}
+.panel{display:none}
+.panel.on{display:block;animation:fadeUp .35s cubic-bezier(.16,1,.3,1)}
+.card{background:var(--surf);border:1px solid var(--bdr);border-radius:20px;
+  padding:20px;margin-bottom:14px;transition:border-color .2s}
+.card:focus-within{border-color:var(--bdr2)}
+.lbl{font-size:10px;font-weight:700;color:var(--tx3);letter-spacing:.08em;
+  text-transform:uppercase;margin-bottom:8px;display:block;font-family:var(--mono)}
+.pgtitle{font-size:clamp(20px,4vw,28px);font-weight:900;letter-spacing:-.04em;
+  line-height:1.15;margin-bottom:5px;
+  background:linear-gradient(130deg,#F1F5F9 30%,#93C5FD 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+
+/* ─── INPUTS ──────────────────────────────────── */
+textarea,input[type=text]{background:var(--surf2);border:1px solid var(--bdr);
+  border-radius:12px;color:var(--tx);font-family:'Cairo','Tajawal',sans-serif;
+  font-size:13px;padding:12px 15px;width:100%;resize:vertical;line-height:1.75;
+  outline:none;transition:border-color .2s,box-shadow .2s}
+textarea:focus,input[type=text]:focus{
+  border-color:rgba(37,99,235,.5);box-shadow:0 0 0 3px rgba(37,99,235,.09)}
+textarea::placeholder,input::placeholder{color:var(--tx3);font-size:12px}
+input[type=text]{height:44px;font-size:13px;font-weight:500;resize:none}
+
+/* ─── BUTTONS ─────────────────────────────────── */
+.btn{display:inline-flex;align-items:center;gap:7px;border-radius:12px;
+  font-family:'Cairo','Tajawal',sans-serif;font-weight:700;font-size:13px;
+  cursor:pointer;transition:.18s;white-space:nowrap;border:none}
+.btn-p{background:linear-gradient(135deg,var(--blue),#1D4ED8);color:#fff;
+  padding:10px 22px;box-shadow:0 4px 14px rgba(37,99,235,.4)}
+.btn-p:hover{box-shadow:0 4px 22px rgba(37,99,235,.6)}
+.btn-p:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+.btn-s{background:linear-gradient(135deg,var(--green),#16A34A);color:#fff;
+  padding:10px 22px;box-shadow:0 4px 12px rgba(34,197,94,.3)}
+.btn-g{background:transparent;color:var(--blue-l);
+  border:1px solid rgba(59,130,246,.3);padding:9px 18px}
+.btn-g:hover{background:var(--blue-g)}
+.btn-o{background:var(--surf3);color:var(--tx2);border:1px solid var(--bdr2);padding:9px 16px}
+.btn-o:hover{background:var(--surf4);color:var(--tx)}
+
+/* ─── GRID ────────────────────────────────────── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:640px){.g2{grid-template-columns:1fr}}
+.row-e{display:flex;justify-content:flex-end;gap:10px;margin-top:10px}
+.row-b{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+
+/* ─── LOCATION BANNER ─────────────────────────── */
+.loc-banner{background:var(--surf2);border:1px solid var(--bdr2);border-radius:14px;
+  padding:12px 16px;margin-bottom:18px;display:none;align-items:center;gap:12px;
+  animation:fadeUp .4s ease;flex-wrap:wrap}
+.loc-banner.show{display:flex}
+.loc-tag{background:var(--blue-g);border:1px solid rgba(59,130,246,.22);
+  border-radius:20px;padding:3px 10px;font-size:10px;font-weight:700;
+  color:var(--blue-l);font-family:var(--mono)}
+.loc-tag.green{background:var(--green-g);border-color:rgba(34,197,94,.22);color:var(--green-l)}
+
+/* ─── ATS ROW ─────────────────────────────────── */
+.ats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.ats-box{background:var(--surf2);border:1px solid var(--bdr);
+  border-radius:12px;padding:10px 12px;text-align:center}
+.ats-v{font-size:18px;font-weight:800;font-family:var(--mono)}
+.ats-l{font-size:10px;color:var(--tx3);margin-top:2px}
+
+/* ─── PIPELINE ────────────────────────────────── */
+.pipeline{background:var(--surf2);border:1px solid var(--bdr);
+  border-radius:14px;padding:16px 20px;margin-bottom:14px;display:none}
+.pl-title{font-size:12px;font-weight:700;color:var(--tx);margin-bottom:12px;
+  display:flex;align-items:center;gap:8px}
+.pl-steps{display:flex;flex-direction:column;gap:8px}
+.pl-step{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--tx2)}
+.pl-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;transition:.3s}
+.pl-dot.idle{background:var(--surf4)}
+.pl-dot.active{background:var(--blue-l);animation:pulse .9s ease infinite}
+.pl-dot.done{background:var(--green)}
+.pl-dot.err{background:var(--red)}
+.pl-bar{height:3px;background:var(--bdr);border-radius:99px;margin-top:12px;overflow:hidden}
+.pl-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--blue-l));
+  border-radius:99px;transition:width .4s ease;width:0%}
+
+/* ─── SCORE COMPARE ───────────────────────────── */
+.sc-wrap{display:none;align-items:center;gap:12px;background:var(--surf2);
+  border:1px solid var(--bdr);border-radius:20px;padding:16px 20px;
+  margin-bottom:16px;flex-wrap:wrap}
+.sc-box{flex:1;min-width:80px;text-align:center}
+.sc-lbl{font-size:9px;font-weight:700;color:var(--tx3);letter-spacing:.08em;
+  text-transform:uppercase;font-family:var(--mono);margin-bottom:5px}
+.sc-val{font-size:32px;font-weight:900;font-family:var(--mono)}
+.sc-sub{font-size:10px;color:var(--tx3);margin-top:2px}
+.sc-arr{font-size:20px;color:var(--blue-l)}
+.sc-gain{font-size:13px;font-weight:700;font-family:var(--mono)}
+
+/* ─── TABS ────────────────────────────────────── */
+.tab-bar{display:flex;gap:2px;background:var(--surf2);border:1px solid var(--bdr);
+  border-radius:12px;padding:4px;margin-bottom:14px}
+.tb{flex:1;padding:7px 12px;border-radius:8px;font-size:12px;font-weight:700;
+  color:var(--tx3);cursor:pointer;border:none;background:transparent;
+  font-family:'Cairo',sans-serif;transition:.18s}
+.tb.on{background:var(--surf4);color:var(--tx);box-shadow:0 2px 6px rgba(0,0,0,.25)}
+
+/* ─── CV OUTPUT ───────────────────────────────── */
+.cv-out{background:var(--surf2);border:1px solid var(--bdr2);border-radius:14px;
+  padding:18px;font-family:'Cairo','Tajawal',sans-serif;font-size:13px;line-height:1.8;
+  color:var(--tx);white-space:pre-wrap;word-break:break-word;max-height:360px;
+  overflow-y:auto;position:relative}
+.cv-badge{position:absolute;top:10px;right:12px;background:rgba(34,197,94,.12);
+  border:1px solid rgba(34,197,94,.25);color:var(--green);font-size:9px;font-weight:700;
+  padding:2px 7px;border-radius:20px;font-family:var(--mono)}
+
+/* ─── MARKDOWN ────────────────────────────────── */
+.md .h2{color:var(--tx);font-weight:800;font-size:14px;margin:16px 0 5px}
+.md .h3{color:var(--blue-l);font-weight:700;font-size:13px;margin:12px 0 4px}
+.md .li{display:flex;gap:9px;font-size:12.5px;color:var(--tx2);padding:3px 0;line-height:1.65}
+.md .li-dot{color:var(--blue-l);flex-shrink:0}
+.md .sep{border:none;border-top:1px solid var(--bdr);margin:10px 0}
+.md .p{font-size:12.5px;color:var(--tx2);line-height:1.7}
+.md .empty{height:4px}
+
+/* ─── SPIN ────────────────────────────────────── */
+.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(37,99,235,.18);
+  border-top:2px solid var(--blue-l);border-radius:50%;animation:spin .75s linear infinite;
+  flex-shrink:0}
+
+/* ─── CHAT ────────────────────────────────────── */
+.chat-win{height:420px;overflow-y:auto;display:flex;flex-direction:column;gap:13px;
+  padding:16px;background:var(--surf);border:1px solid var(--bdr);
+  border-radius:20px;margin-bottom:12px;scroll-behavior:smooth}
+.chat-win::-webkit-scrollbar{width:3px}
+.chat-win::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:99px}
+.msg{display:flex;gap:9px;animation:slideIn .2s ease}
+.msg.user{flex-direction:row-reverse}
+.ava{width:32px;height:32px;border-radius:9px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:14px}
+.ava.bot{background:linear-gradient(135deg,var(--blue),var(--purple));
+  box-shadow:0 0 10px rgba(37,99,235,.3)}
+.ava.usr{background:var(--surf4);border:1px solid var(--bdr2)}
+.bbl{max-width:76%;padding:11px 15px;font-size:13px;line-height:1.65;
+  font-family:'Cairo','Tajawal',sans-serif}
+.bbl.bot{background:var(--surf3);border:1px solid var(--bdr2);color:var(--tx2);
+  border-radius:4px 13px 13px 13px}
+.bbl.usr{background:rgba(37,99,235,.11);border:1px solid rgba(37,99,235,.22);
+  color:var(--tx);border-radius:13px 4px 13px 13px}
+.typing{display:flex;gap:4px;align-items:center;padding:11px 14px;
+  background:var(--surf3);border:1px solid var(--bdr2);
+  border-radius:4px 13px 13px 13px}
+.td{width:6px;height:6px;border-radius:50%;background:var(--blue-l);
+  animation:pulse 1.3s ease infinite}
+
+/* ─── PROGRESS ────────────────────────────────── */
+.prog-bar{background:var(--surf3);border-radius:99px;height:4px;overflow:hidden}
+.prog-fill{background:linear-gradient(90deg,var(--blue),var(--blue-l));height:100%;
+  border-radius:99px;transition:width .45s cubic-bezier(.4,0,.2,1)}
+
+/* ─── SEND ────────────────────────────────────── */
+.inp-row{display:flex;gap:10px}
+.send-btn{background:linear-gradient(135deg,var(--blue),#1D4ED8);color:#fff;border:none;
+  border-radius:12px;padding:0 18px;min-height:78px;flex-direction:column;
+  align-items:center;justify-content:center;gap:3px;cursor:pointer;
+  font-family:'Cairo',sans-serif;font-weight:700;font-size:11px;
+  box-shadow:0 4px 14px rgba(37,99,235,.4);transition:.18s;display:flex;flex-shrink:0}
+.send-btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+
+/* ─── REPORT ──────────────────────────────────── */
+.rep-hero{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
+@media(max-width:480px){.rep-hero{grid-template-columns:1fr}}
+.rep-box{background:var(--surf);border:1px solid var(--bdr);border-radius:20px;
+  padding:20px;text-align:center}
+.rep-score{font-size:48px;font-weight:900;font-family:var(--mono);line-height:1}
+.rep-lbl{font-size:9px;color:var(--tx3);font-family:var(--mono);text-transform:uppercase;
+  letter-spacing:.08em;margin-bottom:7px}
+
+/* ─── NOTIFY / ERROR ──────────────────────────── */
+.notify{background:var(--green-g);border:1px solid rgba(34,197,94,.22);border-radius:12px;
+  padding:10px 14px;font-size:12px;color:var(--green-l);margin-bottom:12px;
+  display:none;align-items:center;gap:7px}
+.notify.show{display:flex}
+.err-box{background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.25);
+  border-radius:12px;padding:12px 16px;font-size:12px;color:#FCA5A5;
+  display:none;align-items:center;gap:8px;margin-bottom:12px}
+.err-box.show{display:flex}
+</style>
+</head>
+<body>
+
+<!-- ══ NAV ══ -->
+<nav class="nav">
+  <div class="nav-brand">
+    <div class="nav-logo">🎯</div>
+    <div class="nav-title" id="nav-title">Interview Architect</div>
+  </div>
+  <div class="nav-right">
+    <div class="sb">
+      <div class="sp active" id="sp0" onclick="jumpTo(0)"><div class="sn">1</div><span id="sl0">Upload</span></div>
+      <div class="ss"></div>
+      <div class="sp" id="sp1" onclick="jumpTo(1)"><div class="sn">2</div><span id="sl1">Enhance</span></div>
+      <div class="ss"></div>
+      <div class="sp" id="sp2" onclick="jumpTo(2)"><div class="sn">3</div><span id="sl2">Interview</span></div>
+      <div class="ss"></div>
+      <div class="sp" id="sp3" onclick="jumpTo(3)"><div class="sn">4</div><span id="sl3">Report</span></div>
+    </div>
+    <button class="lb" onclick="toggleLang()"><div class="ld"></div><span id="lang-btn">العربية</span></button>
+  </div>
+</nav>
+
+<div class="wrap">
+
+<!-- STAGE 0: UPLOAD -->
+<div class="panel on" id="s0">
+  <div style="margin-bottom:22px">
+    <div class="pgtitle" id="s0-title">Upload Job Description &amp; Candidate CV</div>
+    <div style="font-size:13px;color:var(--tx2)" id="s0-sub">Align · Enhance · Interview · Report</div>
+  </div>
+  <div class="loc-banner" id="loc-banner">
+    <div style="font-size:18px">📍</div>
+    <div style="flex:1;min-width:120px">
+      <div style="font-size:13px;font-weight:700;color:var(--tx)" id="loc-city"></div>
+      <div style="font-size:11px;color:var(--tx2)" id="loc-sub"></div>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap" id="loc-tags"></div>
+    <button style="background:transparent;border:none;color:var(--tx3);font-size:11px;cursor:pointer;font-family:'Cairo',sans-serif;margin-left:auto" onclick="document.getElementById('loc-banner').className='loc-banner'">Dismiss</button>
+  </div>
+  <div class="card">
+    <label class="lbl" id="lbl-role">ROLE TITLE (OPTIONAL)</label>
+    <input type="text" id="role" placeholder="Suggested from your location…"/>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <label class="lbl" id="lbl-jd">📋 JOB DESCRIPTION</label>
+      <textarea id="jd" rows="12" placeholder="Paste the full job description — requirements, responsibilities, qualifications…"></textarea>
+    </div>
+    <div class="card">
+      <label class="lbl" id="lbl-cv">📄 CANDIDATE CV</label>
+      <textarea id="cv" rows="12" placeholder="Paste the candidate's CV — experience, skills, education, achievements…"></textarea>
+    </div>
+  </div>
+  <div class="ats-row" id="ats-pre" style="display:none">
+    <div class="ats-box" style="border-color:rgba(59,130,246,.22);background:var(--blue-g)"><div class="ats-v" id="ats-w" style="color:var(--blue-l)">—</div><div class="ats-l" id="ats-lw">CV Words</div></div>
+    <div class="ats-box" style="border-color:rgba(245,158,11,.22);background:rgba(245,158,11,.07)"><div class="ats-v" id="ats-k" style="color:var(--amber)">—</div><div class="ats-l" id="ats-lk">Keywords Matched</div></div>
+    <div class="ats-box" style="border-color:rgba(34,197,94,.22);background:var(--green-g)"><div class="ats-v" id="ats-l" style="color:var(--green)">—</div><div class="ats-l" id="ats-ll">Length Score</div></div>
+  </div>
+  <div class="row-e">
+    <button class="btn btn-o" id="clr-btn" onclick="clearInputs()" style="display:none">Clear</button>
+    <button class="btn btn-p" id="analyze-btn" onclick="runEnhancement()" disabled><span id="analyze-txt">Analyze &amp; Enhance CV →</span></button>
+  </div>
+</div>
+
+<!-- STAGE 1: ENHANCE -->
+<div class="panel" id="s1">
+  <div style="margin-bottom:18px">
+    <div class="pgtitle" style="font-size:22px" id="en-h">CV Enhancement Report</div>
+    <div style="font-size:13px;color:var(--tx2)" id="en-sub">Review analysis · use rewritten CV · proceed to interview</div>
+  </div>
+  <div class="pipeline" id="pipeline">
+    <div class="pl-title"><div class="spin"></div><span id="pl-title-txt">Processing your CV…</span></div>
+    <div class="pl-steps">
+      <div class="pl-step"><div class="pl-dot active" id="pd1"></div><span id="ps1">Parsing job requirements…</span></div>
+      <div class="pl-step"><div class="pl-dot idle" id="pd2"></div><span id="ps2">Scoring CV against ATS criteria…</span></div>
+      <div class="pl-step"><div class="pl-dot idle" id="pd3"></div><span id="ps3">Rewriting CV for maximum match…</span></div>
+      <div class="pl-step"><div class="pl-dot idle" id="pd4"></div><span id="ps4">Finalising enhancement report…</span></div>
+    </div>
+    <div class="pl-bar"><div class="pl-fill" id="pl-fill"></div></div>
+  </div>
+  <div class="sc-wrap" id="sc-wrap">
+    <div class="sc-box"><div class="sc-lbl" id="sc-l1">ORIGINAL</div><div class="sc-val" id="sc-orig" style="color:var(--red)">—</div><div class="sc-sub" id="sc-s1">Before rewrite</div></div>
+    <div class="sc-arr">⟶</div>
+    <div class="sc-box"><div class="sc-lbl" id="sc-l2">ENHANCED</div><div class="sc-val" id="sc-new" style="color:var(--green)">—</div><div class="sc-sub" id="sc-s2">After rewrite</div></div>
+    <div class="sc-arr" style="color:var(--green)">↑</div>
+    <div class="sc-box"><div class="sc-lbl" id="sc-l3">GAIN</div><div class="sc-gain" id="sc-gain">+—</div><div class="sc-sub" id="sc-s3">pts improvement</div></div>
+  </div>
+  <div class="tab-bar">
+    <button class="tb on" id="tb0" onclick="tab('analysis')">📊 <span id="tb0t">Gap Analysis</span></button>
+    <button class="tb" id="tb1" onclick="tab('cv')">✦ <span id="tb1t">Rewritten CV</span></button>
+  </div>
+  <div id="tab-analysis">
+    <div class="card" style="max-height:400px;overflow-y:auto;padding:18px">
+      <div class="md" id="analysis-out"><div style="display:flex;gap:9px;align-items:center;color:var(--tx3)"><div class="spin"></div><span id="ana-load"> Analyzing…</span></div></div>
+    </div>
+  </div>
+  <div id="tab-cv" style="display:none">
+    <div class="notify" id="cv-notify"><span>✓</span><span id="notify-txt">CV rewritten to maximize ATS score.</span></div>
+    <div class="cv-out" id="cv-out">
+      <div style="display:flex;gap:9px;align-items:center;color:var(--tx3)"><div class="spin"></div><span id="rw-load"> Rewriting CV…</span></div>
+      <div class="cv-badge">ENHANCED</div>
+    </div>
+    <div class="row-e" style="margin-top:10px">
+      <button class="btn btn-o" onclick="copyCv()"><span id="copy-cv">Copy Enhanced CV</span></button>
+      <button class="btn btn-o" onclick="useCv()"><span id="use-cv">Use for Interview ✓</span></button>
+    </div>
+  </div>
+  <div class="row-b" style="margin-top:16px">
+    <button class="btn btn-g" onclick="jumpTo(0)">← <span id="back-txt">Back</span></button>
+    <button class="btn btn-s" onclick="startInterview()"><span id="start-txt">Start Interview Agent →</span></button>
+  </div>
+</div>
+
+<!-- STAGE 2: INTERVIEW -->
+<div class="panel" id="s2">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+    <div>
+      <div class="pgtitle" style="font-size:20px" id="int-title">Interview Agent</div>
+      <div style="font-size:11px;color:var(--tx3);font-family:var(--mono);margin-top:2px" id="int-sub">Initializing…</div>
+    </div>
+    <div style="min-width:130px">
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--tx3);font-family:var(--mono);margin-bottom:4px"><span id="prog-lbl">Progress</span><span id="q-label">0 / 8</span></div>
+      <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+    </div>
+  </div>
+  <div class="err-box" id="int-err">
+    <span>⚠</span><span id="int-err-msg">Connection issue. Please retry.</span>
+    <button style="margin-left:auto;background:transparent;border:1px solid rgba(239,68,68,.3);color:#FCA5A5;border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:'Cairo',sans-serif" onclick="retryInt()" id="retry-btn">Retry</button>
+  </div>
+  <div class="chat-win" id="chat"></div>
+  <div class="inp-row">
+    <textarea id="answer" rows="3" style="resize:none;flex:1" placeholder="Type your answer… (Enter to send)"></textarea>
+    <button class="send-btn" id="send-btn" onclick="sendAnswer()" disabled>
+      <span style="font-size:20px">↑</span>
+      <span id="send-lbl" style="font-size:9px;letter-spacing:.05em">SEND</span>
+    </button>
+  </div>
+  <div style="font-size:10px;color:var(--tx3);text-align:center;margin-top:7px;font-family:var(--mono)">Evaluated against industry standards · <span id="q-remain">8</span> <span id="q-rem-txt">questions remaining</span></div>
+</div>
+
+<!-- STAGE 3: REPORT -->
+<div class="panel" id="s3">
+  <div style="margin-bottom:18px">
+    <div class="pgtitle" style="font-size:22px" id="rep-title">Evaluation Report</div>
+    <div style="font-size:13px;color:var(--tx2)" id="rep-sub">Competency assessment with logic references</div>
+  </div>
+  <div class="rep-hero" id="rep-hero"></div>
+  <div class="card" style="max-height:500px;overflow-y:auto;padding:20px"><div class="md" id="report-out"></div></div>
+  <div class="row-b" style="margin-top:12px">
+    <button class="btn btn-g" onclick="resetAll()"><span id="new-int">New Interview</span></button>
+    <button class="btn btn-o" onclick="copyReport()"><span id="copy-rep">Copy Report</span></button>
+  </div>
+</div>
+
+</div><!-- /wrap -->
+
+<script>
+'use strict';
+// ═══ STATE ═══════════════════════════════════════
+let lang='en',curStage=0;
+let jdTxt='',cvTxt='',cvEnh='',roleTxt='',analysis='';
+let origScore=null,newScore=null;
+let msgs=[],qCount=0,reportTxt='';
+let lastFailed=null,pipeTimer=null;
+
+// ═══ REGIONS ═════════════════════════════════════
+const REGIONS={
+  'Iraq':{roles:['Senior Software Engineer','Operations Manager','Data Analyst','Project Coordinator'],companies:['Zain Telecom','Asiacell','National Bank of Iraq','USAID Partners'],areas:['Karrada','Mansour District','Erbil City Centre','Basra Corniche']},
+  'United Arab Emirates':{roles:['Business Development Manager','Full Stack Developer','Financial Analyst','Marketing Director'],companies:['Emirates NBD','Etisalat (e&)','DP World','Emaar Properties'],areas:['Dubai Marina','Business Bay','DIFC','Al Reem Island']},
+  'Saudi Arabia':{roles:['Project Manager','Civil Engineer','Data Scientist','HR Business Partner'],companies:['Saudi Aramco','STC','Al Rajhi Bank','SABIC'],areas:['Riyadh KAFD','Jeddah Corniche','Al Khobar','Dhahran']},
+  'United Kingdom':{roles:['Product Manager','Senior DevOps Engineer','Investment Analyst','UX Designer'],companies:['HSBC','Barclays','BP','GSK'],areas:['Canary Wharf','Shoreditch','Manchester City Centre','Edinburgh New Town']},
+  'Germany':{roles:['Software Architect','Business Analyst','ML Engineer','Manufacturing Engineer'],companies:['SAP','Siemens','BMW','Deutsche Bank'],areas:['Berlin Mitte','Munich Maxvorstadt','Hamburg HafenCity','Frankfurt Westend']},
+  'United States':{roles:['Senior Software Engineer','Product Manager','Data Scientist','Cloud Architect'],companies:['Google','Amazon','Microsoft','Salesforce'],areas:['Silicon Valley','Seattle SLU','New York Midtown','Austin Tech Corridor']},
+  'India':{roles:['Full Stack Developer','Business Analyst','DevOps Engineer','Product Manager'],companies:['Tata Consultancy Services','Infosys','Wipro','HCL Technologies'],areas:['Bangalore Whitefield','Hyderabad HITEC City','Mumbai BKC','Pune Hinjewadi']},
+  'Singapore':{roles:['Fintech Developer','Risk Analyst','Data Engineer','Cybersecurity Specialist'],companies:['DBS Bank','Grab','Sea Limited','Singtel'],areas:['Marina Bay','One-North','Tanjong Pagar','Jurong East']},
+  'default':{roles:['Software Engineer','Product Manager','Data Analyst','Operations Manager'],companies:['Accenture','Deloitte','IBM','Oracle'],areas:['City Centre','Business District','Tech Quarter','Financial Hub']}
+};
+const regionData=c=>REGIONS[c]||REGIONS['default'];
+
+// ═══ STRINGS ═════════════════════════════════════
+const S={
+  en:{navTitle:'Interview Architect',s0Title:'Upload Job Description & Candidate CV',s0Sub:'Align · Enhance · Interview · Report',lblRole:'ROLE TITLE (OPTIONAL)',lblJd:'📋 JOB DESCRIPTION',lblCv:'📄 CANDIDATE CV',jdPh:'Paste the full job description…',cvPh:'Paste the candidate\'s CV…',rolePh:'Suggested from your location…',atsLw:'CV Words',atsLk:'Keywords Matched',atsLl:'Length Score',analyzeTxt:'Analyze & Enhance CV →',enH:'CV Enhancement Report',enSub:'Review analysis · use rewritten CV · proceed to interview',scL1:'ORIGINAL',scL2:'ENHANCED',scL3:'GAIN',scS1:'Before rewrite',scS2:'After rewrite',scS3:'pts improvement',tb0:'Gap Analysis',tb1:'Rewritten CV',anaLoad:' Analyzing CV…',rwLoad:' Rewriting CV…',notifyTxt:'CV rewritten to maximize ATS score.',copyCv:'Copy Enhanced CV',useCv:'Use for Interview ✓',back:'Back',startTxt:'Start Interview Agent →',intTitle:'Interview Agent',progLbl:'Progress',sendLbl:'SEND',qRemTxt:'questions remaining',repTitle:'Evaluation Report',repSub:'Competency assessment with logic references',newInt:'New Interview',copyRep:'Copy Report',langBtn:'العربية',sl:['Upload','Enhance','Interview','Report'],plTitleTxt:'Processing your CV…',ps1:'Parsing job requirements…',ps2:'Scoring CV against ATS criteria…',ps3:'Rewriting CV for maximum match…',ps4:'Finalising enhancement report…',retryBtn:'Retry',intErrMsg:'Connection issue. Please retry.',ansPh:'Type your answer… (Enter to send)'},
+  ar:{navTitle:'مُهندس المقابلات',s0Title:'ارفع الوصف الوظيفي والسيرة الذاتية',s0Sub:'توافق · تحسين · مقابلة · تقرير',lblRole:'المسمى الوظيفي (اختياري)',lblJd:'📋 الوصف الوظيفي',lblCv:'📄 السيرة الذاتية',jdPh:'الصق الوصف الوظيفي…',cvPh:'الصق السيرة الذاتية…',rolePh:'سيتم الاقتراح بناءً على موقعك…',atsLw:'كلمات السيرة',atsLk:'الكلمات المفتاحية',atsLl:'درجة الطول',analyzeTxt:'تحليل وتحسين السيرة ←',enH:'تقرير تحسين السيرة',enSub:'راجع التحليل ثم انتقل للمقابلة',scL1:'الدرجة الأصلية',scL2:'الدرجة المحسّنة',scL3:'الفارق',scS1:'قبل التحسين',scS2:'بعد التحسين',scS3:'نقطة تحسين',tb0:'تحليل الثغرات',tb1:'السيرة المحسّنة',anaLoad:' تحليل السيرة…',rwLoad:' إعادة كتابة السيرة…',notifyTxt:'تمت إعادة كتابة السيرة.',copyCv:'نسخ السيرة المحسّنة',useCv:'استخدم للمقابلة ✓',back:'رجوع',startTxt:'← ابدأ وكيل المقابلة',intTitle:'وكيل المقابلة',progLbl:'التقدم',sendLbl:'إرسال',qRemTxt:'أسئلة متبقية',repTitle:'تقرير التقييم',repSub:'تقييم الكفاءة مع مراجع منطقية',newInt:'مقابلة جديدة',copyRep:'نسخ التقرير',langBtn:'English',sl:['رفع','تحسين','مقابلة','تقرير'],plTitleTxt:'جارٍ معالجة سيرتك…',ps1:'تحليل متطلبات الوظيفة…',ps2:'تقييم السيرة…',ps3:'إعادة كتابة السيرة…',ps4:'إنهاء تقرير التحسين…',retryBtn:'إعادة المحاولة',intErrMsg:'مشكلة في الاتصال.',ansPh:'اكتب إجابتك… (Enter للإرسال)'}
+};
+const T=k=>S[lang][k]||k;
+
+function applyLang(){
+  const isAr=lang==='ar';
+  document.documentElement.lang=lang;
+  document.body.style.direction=isAr?'rtl':'ltr';
+  document.body.style.textAlign=isAr?'right':'left';
+  const m={'nav-title':'navTitle','s0-title':'s0Title','s0-sub':'s0Sub','lbl-role':'lblRole','lbl-jd':'lblJd','lbl-cv':'lblCv','ats-lw':'atsLw','ats-lk':'atsLk','ats-ll':'atsLl','analyze-txt':'analyzeTxt','en-h':'enH','en-sub':'enSub','sc-l1':'scL1','sc-l2':'scL2','sc-l3':'scL3','sc-s1':'scS1','sc-s2':'scS2','sc-s3':'scS3','tb0t':'tb0','tb1t':'tb1','ana-load':'anaLoad','rw-load':'rwLoad','notify-txt':'notifyTxt','copy-cv':'copyCv','use-cv':'useCv','back-txt':'back','start-txt':'startTxt','int-title':'intTitle','prog-lbl':'progLbl','send-lbl':'sendLbl','q-rem-txt':'qRemTxt','rep-title':'repTitle','rep-sub':'repSub','new-int':'newInt','copy-rep':'copyRep','lang-btn':'langBtn','pl-title-txt':'plTitleTxt','ps1':'ps1','ps2':'ps2','ps3':'ps3','ps4':'ps4','retry-btn':'retryBtn','int-err-msg':'intErrMsg'};
+  Object.entries(m).forEach(([id,k])=>{const e=document.getElementById(id);if(e)e.textContent=T(k);});
+  document.getElementById('role').placeholder=T('rolePh');
+  document.getElementById('jd').placeholder=T('jdPh');
+  document.getElementById('cv').placeholder=T('cvPh');
+  document.getElementById('answer').placeholder=T('ansPh');
+  ['0','1','2','3'].forEach(i=>{const e=document.getElementById('sl'+i);if(e)e.textContent=T('sl')[i];});
+  updProg();
+}
+function toggleLang(){lang=lang==='en'?'ar':'en';applyLang();}
+
+// ═══ SILENT GEOLOCATION ══════════════════════════
+function initSilentLocation(){
+  if(!navigator.geolocation)return;
+  navigator.geolocation.getCurrentPosition(async pos=>{
+    const{latitude:lat,longitude:lon}=pos.coords;
+    let country='default',city='',region='';
+    try{
+      const r=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`,{headers:{'Accept-Language':'en'}});
+      const d=await r.json();
+      country=d.address?.country||'default';
+      city=d.address?.city||d.address?.town||d.address?.village||'';
+      region=d.address?.state||'';
+    }catch(e){}
+    const data=regionData(country);
+    if(!document.getElementById('role').value&&data.roles[0])document.getElementById('role').value=data.roles[0];
+    document.getElementById('loc-city').textContent=city||country;
+    document.getElementById('loc-sub').textContent=(region?region+', ':'')+country;
+    const tags=document.getElementById('loc-tags');tags.innerHTML='';
+    [data.roles[0],data.companies[0],data.areas[0]].filter(Boolean).forEach((t,i)=>{
+      const s=document.createElement('span');s.className='loc-tag'+(i===0?' green':'');s.textContent=t;tags.appendChild(s);
+    });
+    document.getElementById('loc-banner').classList.add('show');
+  },()=>{},{timeout:6000,maximumAge:300000});
+}
+
+// ═══ INPUTS ══════════════════════════════════════
+document.getElementById('jd').addEventListener('input',onInput);
+document.getElementById('cv').addEventListener('input',onInput);
+document.getElementById('answer').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendAnswer();}});
+function onInput(){
+  const j=document.getElementById('jd').value.trim(),c=document.getElementById('cv').value.trim();
+  document.getElementById('analyze-btn').disabled=!(j&&c);
+  document.getElementById('clr-btn').style.display=(j||c)?'inline-flex':'none';
+  if(j&&c){
+    const w=c.split(/\s+/).filter(Boolean).length;
+    const kw=j.toLowerCase().split(/\W+/).filter(x=>x.length>4).filter((x,i,a)=>a.indexOf(x)===i&&c.toLowerCase().includes(x)).length;
+    document.getElementById('ats-w').textContent=w;document.getElementById('ats-k').textContent=kw;
+    document.getElementById('ats-l').textContent=w>=400&&w<=800?'Good':w<400?'Short':'Long';
+    document.getElementById('ats-pre').style.display='grid';
+  }else document.getElementById('ats-pre').style.display='none';
+}
+function clearInputs(){['jd','cv'].forEach(id=>document.getElementById(id).value='');document.getElementById('ats-pre').style.display='none';document.getElementById('analyze-btn').disabled=true;document.getElementById('clr-btn').style.display='none';}
+
+// ═══ NAVIGATION ═══════════════════════════════════
+function jumpTo(n,force=false){
+  if(!force&&n>curStage)return;
+  curStage=n;
+  ['s0','s1','s2','s3'].forEach((s,i)=>{document.getElementById(s).classList.toggle('on',i===n);const p=document.getElementById('sp'+i);p.classList.remove('active','done');if(i===n)p.classList.add('active');else if(i<n)p.classList.add('done');});
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function tab(t){
+  document.getElementById('tab-analysis').style.display=t==='analysis'?'block':'none';
+  document.getElementById('tab-cv').style.display=t==='cv'?'block':'none';
+  document.getElementById('tb0').classList.toggle('on',t==='analysis');
+  document.getElementById('tb1').classList.toggle('on',t==='cv');
+}
+
+// ═══ MARKDOWN ════════════════════════════════════
+function renderMD(text,el){
+  el.innerHTML='';
+  (text||'').split('\n').forEach(line=>{
+    let d;
+    if(line.startsWith('## ')){d=document.createElement('div');d.className='h2';d.textContent=line.slice(3);}
+    else if(line.startsWith('### ')){d=document.createElement('div');d.className='h3';d.textContent=line.slice(4);}
+    else if(line.startsWith('- ')){d=document.createElement('div');d.className='li';d.innerHTML=`<span class="li-dot">›</span><span>${line.slice(2)}</span>`;}
+    else if(line.startsWith('---')){d=document.createElement('hr');d.className='sep';}
+    else if(!line.trim()){d=document.createElement('div');d.className='empty';}
+    else{d=document.createElement('div');d.className='p';d.textContent=line;}
+    el.appendChild(d);
+  });
+}
+
+// ═══ CLAUDE API (FIXED: timeout + error handling) ═
+async function callClaude(sys,user,hist=[]){
+  const ctrl=new AbortController();
+  const tid=setTimeout(()=>ctrl.abort(),55000);
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json'},signal:ctrl.signal,
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:700,system:sys,messages:[...hist,{role:'user',content:user}]})
+    });
+    clearTimeout(tid);
+    if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'API error '+r.status);}
+    const d=await r.json();
+    return d.content?.find(b=>b.type==='text')?.text||'';
+  }catch(e){clearTimeout(tid);throw e;}
+}
+
+// ═══ SYSTEM PROMPTS ═══════════════════════════════
+const SYS_ANA=`You are a Senior Technical Recruiter and ATS specialist. Analyze the JD and CV. Output EXACTLY:
+## ALIGNMENT SCORE: [0-100]
+## ATS KEYWORD MATCH
+- [keyword ✓]
+## GAPS IDENTIFIED
+- [gap ✗]
+## KEY IMPROVEMENTS NEEDED
+- [improvement]
+## INTERVIEW RISK AREAS
+- [risk area]
+Be concise. Facts only.`;
+
+const SYS_RW=`You are an expert ATS CV writer. Rewrite the ENTIRE CV to maximize ATS match. Keep all real facts. Use action verbs. Quantify results. Mirror JD keywords. Lead with targeted summary. Order: Summary→Skills→Experience→Education. Output full rewritten CV as plain text. Final line: NEW ALIGNMENT SCORE: [0-100]`;
+
+const SYS_INT=`You are a Senior Technical Recruiter conducting a structured job interview.
+RULES: 1) One question per response. 2) Base on JD/CV/gaps. 3) Validate against standards. 4) One clarifying follow-up if ambiguous; mark Inconclusive if still unclear. 5) Professional tone. 6) After 8 answers, output report.
+SEQUENCE: Q1=background · Q2-Q3=technical · Q4=situational · Q5=behavioral(STAR) · Q6=gap probing · Q7=advanced · Q8=self-assessment
+After 8 answers output:
+INTERVIEW_COMPLETE
+## CANDIDATE EVALUATION REPORT
+### ROLE: [from JD]
+### DATE: ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}
+### QUESTIONS ASKED: 8
+---
+### TECHNICAL PROFICIENCY
+Score: [0-10] | Weight: 40%
+[Assessment]
+Logic Reference: [standard]
+### COMMUNICATION & SOFT SKILLS
+Score: [0-10] | Weight: 25%
+[Assessment]
+Logic Reference: [framework]
+### SITUATIONAL JUDGMENT
+Score: [0-10] | Weight: 20%
+[Assessment]
+Logic Reference: [framework]
+### ROLE FIT
+Score: [0-10] | Weight: 15%
+[Assessment]
+---
+### STRENGTHS
+- [evidence-based]
+- [evidence-based]
+- [evidence-based]
+### GAPS & CONCERNS
+- [with evidence]
+- [with evidence]
+### INCONCLUSIVE AREAS
+- [or "None identified"]
+---
+### FINAL COMPETENCY SCORE: [weighted 0-100]
+### RECOMMENDATION: [STRONG HIRE / HIRE / CONSIDER / NO HIRE]
+### REASONING: [2-3 sentences]`;
+
+// ═══ PIPELINE ════════════════════════════════════
+function startPipeline(){
+  document.getElementById('pipeline').style.display='block';
+  const dots=['pd1','pd2','pd3','pd4'];let i=0;
+  pipeTimer=setInterval(()=>{if(i>0)document.getElementById(dots[i-1]).className='pl-dot done';if(i<dots.length){document.getElementById(dots[i]).className='pl-dot active';document.getElementById('pl-fill').style.width=((i+1)/4*75)+'%';}i++;if(i>dots.length)clearInterval(pipeTimer);},900);
+}
+function endPipeline(ok){
+  clearInterval(pipeTimer);
+  ['pd1','pd2','pd3','pd4'].forEach(id=>document.getElementById(id).className='pl-dot '+(ok?'done':'err'));
+  document.getElementById('pl-fill').style.width='100%';
+  setTimeout(()=>{document.getElementById('pipeline').style.display='none';},800);
+}
+
+// ═══ ENHANCEMENT (FIXED: sequential calls) ═══════
+async function runEnhancement(){
+  jdTxt=document.getElementById('jd').value.trim();
+  cvTxt=document.getElementById('cv').value.trim();
+  roleTxt=document.getElementById('role').value.trim();
+  jumpTo(1,true);tab('analysis');startPipeline();
+  const aEl=document.getElementById('analysis-out'),cEl=document.getElementById('cv-out');
+  aEl.innerHTML=`<div style="display:flex;gap:9px;align-items:center;color:var(--tx3)"><div class="spin"></div><span>${T('anaLoad')}</span></div>`;
+  cEl.innerHTML=`<div style="display:flex;gap:9px;align-items:center;color:var(--tx3)"><div class="spin"></div><span>${T('rwLoad')}</span></div><div class="cv-badge">ENHANCED</div>`;
+  const prompt=`JOB DESCRIPTION:\n${jdTxt}\n\nCANDIDATE CV:\n${cvTxt}`;
+  try{
+    // FIXED: sequential, not parallel
+    const aRes=await callClaude(SYS_ANA,prompt);
+    analysis=aRes;renderMD(analysis,aEl);
+    const oM=analysis.match(/ALIGNMENT SCORE:\s*(\d+)/);origScore=oM?parseInt(oM[1]):null;
+    const rRes=await callClaude(SYS_RW,prompt);
+    const nM=rRes.match(/NEW ALIGNMENT SCORE:\s*(\d+)/);newScore=nM?parseInt(nM[1]):null;
+    cvEnh=rRes.replace(/NEW ALIGNMENT SCORE:\s*\d+/,'').trim();
+    cEl.textContent=cvEnh;
+    document.getElementById('cv-notify').classList.add('show');
+    const sc=document.getElementById('sc-wrap');
+    if(origScore!==null||newScore!==null){
+      sc.style.display='flex';
+      if(origScore!==null){const e=document.getElementById('sc-orig');e.textContent=origScore;e.style.color=origScore>=70?'var(--green)':origScore>=50?'var(--amber)':'var(--red)';}
+      if(newScore!==null)document.getElementById('sc-new').textContent=newScore;
+      if(origScore!==null&&newScore!==null){const g=newScore-origScore;const el=document.getElementById('sc-gain');el.textContent=(g>=0?'+':'')+g+' pts';el.style.color=g>0?'var(--green)':'var(--red)';}
+    }
+    endPipeline(true);
+  }catch(e){endPipeline(false);aEl.innerHTML=`<div style="color:var(--red);font-size:12px">⚠ ${e.message||'Error — please try again.'}</div>`;}
+}
+function copyCv(){navigator.clipboard.writeText(cvEnh).then(()=>{const b=event.target;const o=b.textContent;b.textContent='✓ Copied!';setTimeout(()=>b.textContent=o,2000);});}
+function useCv(){cvTxt=cvEnh;document.getElementById('cv').value=cvEnh;const b=event.target;const o=b.textContent;b.textContent='✓ Applied';setTimeout(()=>b.textContent=o,2000);}
+
+// ═══ INTERVIEW (FIXED: correct message history) ══
+async function startInterview(){
+  jumpTo(2,true);
+  document.getElementById('chat').innerHTML='';msgs=[];qCount=0;
+  document.getElementById('send-btn').disabled=true;
+  document.getElementById('int-err').classList.remove('show');
+  updProg();lastFailed='interview_start';addTyping();
+  try{
+    // FIXED: context as first user message → valid alternating history
+    const ctxMsg=`BEGIN INTERVIEW.\nJOB DESCRIPTION:\n${jdTxt}\nCANDIDATE CV:\n${cvTxt}\nGAP ANALYSIS:\n${analysis}\nGreet the candidate briefly, name the role, then ask Question 1.`;
+    const first=await callClaude(SYS_INT,ctxMsg,[]);
+    removeTyping();
+    if(!first||!first.trim())throw new Error('Empty response from interview agent.');
+    msgs=[{role:'user',content:ctxMsg},{role:'assistant',content:first}];
+    addMsg('assistant',first);qCount=1;updProg();
+    document.getElementById('send-btn').disabled=false;
+    document.getElementById('answer').focus();lastFailed=null;
+  }catch(e){removeTyping();showIntErr(e.message);}
+}
+
+async function sendAnswer(){
+  const ans=document.getElementById('answer').value.trim();
+  if(!ans||document.getElementById('send-btn').disabled)return;
+  document.getElementById('answer').value='';
+  document.getElementById('send-btn').disabled=true;
+  document.getElementById('int-err').classList.remove('show');
+  addMsg('user',ans);msgs.push({role:'user',content:ans});addTyping();
+  try{
+    const hist=msgs.slice(0,-1);
+    const resp=await callClaude(SYS_INT,ans,hist);
+    removeTyping();
+    if(!resp||!resp.trim())throw new Error('Empty response — please retry.');
+    if(resp.includes('INTERVIEW_COMPLETE')){
+      reportTxt=resp.replace('INTERVIEW_COMPLETE','').trim();
+      msgs.push({role:'assistant',content:resp});
+      addMsg('assistant',lang==='ar'?'شكراً — تقرير التقييم جاهز.':'Thank you — your evaluation report is ready.');
+      setTimeout(showReport,1100);
+    }else{
+      msgs.push({role:'assistant',content:resp});addMsg('assistant',resp);
+      qCount++;updProg();
+      document.getElementById('send-btn').disabled=false;
+      document.getElementById('answer').focus();lastFailed=null;
+    }
+  }catch(e){
+    removeTyping();msgs.pop();
+    document.getElementById('answer').value=ans;
+    showIntErr(e.message);
+  }
+}
+
+function showIntErr(msg){document.getElementById('int-err-msg').textContent=msg||T('intErrMsg');document.getElementById('int-err').classList.add('show');document.getElementById('send-btn').disabled=false;}
+function retryInt(){document.getElementById('int-err').classList.remove('show');if(lastFailed==='interview_start')startInterview();else document.getElementById('send-btn').disabled=false;}
+
+function updProg(){
+  const pct=Math.min((qCount/8)*100,100);
+  document.getElementById('prog-fill').style.width=pct+'%';
+  document.getElementById('q-label').textContent=Math.min(qCount,8)+' / 8';
+  document.getElementById('q-remain').textContent=Math.max(8-qCount,0);
+  document.getElementById('int-sub').textContent=(roleTxt||'Interview')+' · Q'+Math.min(qCount,8)+' / 8';
+}
+
+function addMsg(role,content){
+  const chat=document.getElementById('chat');
+  const wrap=document.createElement('div');wrap.className='msg'+(role==='user'?' user':'');
+  const av=document.createElement('div');av.className='ava '+(role==='assistant'?'bot':'usr');av.textContent=role==='assistant'?'🎯':'👤';
+  const bb=document.createElement('div');bb.className='bbl '+(role==='assistant'?'bot':'usr');bb.textContent=content;
+  if(role==='assistant'){wrap.appendChild(av);wrap.appendChild(bb);}
+  else{wrap.appendChild(bb);wrap.appendChild(av);}
+  chat.appendChild(wrap);chat.scrollTop=chat.scrollHeight;
+}
+function addTyping(){
+  const chat=document.getElementById('chat');
+  const wrap=document.createElement('div');wrap.className='msg';wrap.id='typ';
+  const av=document.createElement('div');av.className='ava bot';av.textContent='🎯';
+  const d=document.createElement('div');d.className='typing';
+  [0,1,2].forEach(i=>{const dot=document.createElement('div');dot.className='td';dot.style.animationDelay=(i*.2)+'s';d.appendChild(dot);});
+  wrap.appendChild(av);wrap.appendChild(d);chat.appendChild(wrap);chat.scrollTop=chat.scrollHeight;
+}
+function removeTyping(){const t=document.getElementById('typ');if(t)t.remove();}
+
+// ═══ REPORT ══════════════════════════════════════
+function showReport(){
+  jumpTo(3,true);
+  const sM=reportTxt.match(/FINAL COMPETENCY SCORE:\s*(\d+)/);
+  const rM=reportTxt.match(/RECOMMENDATION:\s*([^\n]+)/);
+  const score=sM?parseInt(sM[1]):null;const rec=rM?rM[1].trim():null;
+  const sc=score?(score>=70?'var(--green)':score>=50?'var(--amber)':'var(--red)'):'var(--tx2)';
+  const rc=rec?(rec.includes('STRONG')?'var(--green)':rec.includes('HIRE')&&!rec.includes('NO')?'var(--green-l)':rec.includes('CONSIDER')?'var(--amber)':'var(--red)'):'var(--tx2)';
+  document.getElementById('rep-hero').innerHTML=score!==null?`<div class="rep-box"><div class="rep-lbl">COMPETENCY SCORE</div><div class="rep-score" style="color:${sc}">${score}</div><div style="font-size:10px;color:var(--tx3);margin-top:4px;font-family:var(--mono)">out of 100</div></div><div class="rep-box" style="display:flex;flex-direction:column;justify-content:center;align-items:center"><div class="rep-lbl">RECOMMENDATION</div><div style="font-size:16px;font-weight:800;color:${rc}">${rec||'—'}</div></div>`:'';
+  renderMD(reportTxt,document.getElementById('report-out'));
+}
+function copyReport(){navigator.clipboard.writeText(reportTxt).then(()=>{const b=event.target;const o=b.textContent;b.textContent='✓ Copied!';setTimeout(()=>b.textContent=o,2000);});}
+function resetAll(){jdTxt='';cvTxt='';cvEnh='';roleTxt='';analysis='';origScore=null;newScore=null;msgs=[];qCount=0;reportTxt='';lastFailed=null;['jd','cv','role'].forEach(id=>document.getElementById(id).value='');document.getElementById('analyze-btn').disabled=true;document.getElementById('clr-btn').style.display='none';document.getElementById('ats-pre').style.display='none';document.getElementById('sc-wrap').style.display='none';document.getElementById('cv-notify').classList.remove('show');document.getElementById('int-err').classList.remove('show');jumpTo(0,true);}
+
+// ═══ INIT ════════════════════════════════════════
+applyLang();
+initSilentLocation();
+</script>
+</body>
+</html>
