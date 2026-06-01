@@ -510,20 +510,60 @@ function renderMD(text,el){
   });
 }
 
-// ═══ CLAUDE API (FIXED: timeout + error handling) ═
+// ═══ CLAUDE API (FIXED: timeout + error handling + compression) ═
 async function callClaude(sys,user,hist=[]){
   const ctrl=new AbortController();
-  const tid=setTimeout(()=>ctrl.abort(),55000);
+  const tid=setTimeout(()=>ctrl.abort(),45000); // Reduced to 45s
   try{
+    // Truncate large inputs to prevent payload overflow
+    const maxLen=8000;
+    const userTrunc=user.length>maxLen?user.slice(0,maxLen)+'...[truncated]':user;
+    
+    const payload={
+      model:'claude-sonnet-4-20250514',
+      max_tokens:700,
+      system:sys,
+      messages:[...hist,{role:'user',content:userTrunc}]
+    };
+    
+    console.log('[API] Sending request, payload size:',JSON.stringify(payload).length,'bytes');
+    
     const r=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',headers:{'Content-Type':'application/json'},signal:ctrl.signal,
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:700,system:sys,messages:[...hist,{role:'user',content:user}]})
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      signal:ctrl.signal,
+      body:JSON.stringify(payload)
     });
+    
     clearTimeout(tid);
-    if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'API error '+r.status);}
+    
+    if(!r.ok){
+      const e=await r.json();
+      const errMsg=e.error?.message||'API error '+r.status;
+      console.error('[API] Error response:',errMsg,e);
+      throw new Error(errMsg);
+    }
+    
     const d=await r.json();
-    return d.content?.find(b=>b.type==='text')?.text||'';
-  }catch(e){clearTimeout(tid);throw e;}
+    const result=d.content?.find(b=>b.type==='text')?.text||'';
+    console.log('[API] Success, response length:',result.length);
+    return result;
+    
+  }catch(e){
+    clearTimeout(tid);
+    
+    // Detailed console logging for debugging
+    if(e.name==='AbortError'){
+      console.error('[API] Request timeout (45s) — payload too large or network slow');
+      throw new Error('Request timeout. Try shorter CV/JD.');
+    }else if(e instanceof TypeError){
+      console.error('[API] Network error:',e.message);
+      throw new Error('Network error — check CORS, internet, API key.');
+    }else{
+      console.error('[API] Exception:',e.message);
+      throw e;
+    }
+  }
 }
 
 // ═══ SYSTEM PROMPTS ═══════════════════════════════
