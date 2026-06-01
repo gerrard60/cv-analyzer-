@@ -1,11 +1,10 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Tajawal:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<title>index .html</title>
+<title>Interview Architect</title>
 <style>
 /* ─── DESIGN TOKENS ─────────────────────────────── */
 *{box-sizing:border-box;margin:0;padding:0}
@@ -234,6 +233,19 @@ input[type=text]{height:44px;font-size:13px;font-weight:500;resize:none}
   border-radius:12px;padding:12px 16px;font-size:12px;color:#FCA5A5;
   display:none;align-items:center;gap:8px;margin-bottom:12px}
 .err-box.show{display:flex}
+
+/* ─── API KEY SETUP ─────────────────────────────── */
+.api-banner{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);border-radius:12px;
+  padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.api-banner.ok{background:var(--green-g);border-color:rgba(34,197,94,.22)}
+#api-key-input{width:100%;max-width:300px;height:36px;padding:8px 12px;
+  background:var(--surf2);border:1px solid var(--bdr);border-radius:8px;
+  color:var(--tx);font-family:var(--mono);font-size:11px}
+#api-key-input::placeholder{color:var(--tx3)}
+.api-btn{background:var(--blue);color:#fff;border:none;border-radius:8px;
+  padding:8px 14px;font-size:11px;font-weight:700;cursor:pointer;
+  font-family:'Cairo',sans-serif;transition:.2s}
+.api-btn:hover{background:var(--blue-l)}
 </style>
 </head>
 <body>
@@ -260,6 +272,14 @@ input[type=text]{height:44px;font-size:13px;font-weight:500;resize:none}
 
 <div class="wrap">
 
+<!-- API KEY SETUP -->
+<div class="api-banner" id="api-banner">
+  <span style="color:var(--amber);font-size:18px">⚙️</span>
+  <span style="flex:1;font-size:12px;color:var(--tx2)">Free Gemini API key needed. <a href="https://aistudio.google.com/app/apikeys" target="_blank" style="color:var(--blue-l);text-decoration:underline">Get one</a></span>
+  <input type="password" id="api-key-input" placeholder="Paste API key here..."/>
+  <button class="api-btn" onclick="setApiKey()">Set</button>
+</div>
+
 <!-- STAGE 0: UPLOAD -->
 <div class="panel on" id="s0">
   <div style="margin-bottom:22px">
@@ -273,7 +293,7 @@ input[type=text]{height:44px;font-size:13px;font-weight:500;resize:none}
       <div style="font-size:11px;color:var(--tx2)" id="loc-sub"></div>
     </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap" id="loc-tags"></div>
-    <button style="background:transparent;border:none;color:var(--tx3);font-size:11px;cursor:pointer;font-family:'Cairo',sans-serif;margin-left:auto" onclick="document.getElementById('loc-banner').className='loc-banner'">Dismiss</button>
+    <button style="background:transparent;border:none;color:var(--tx3);font-size:11px;cursor:pointer;font-family:'Cairo',sans-serif;margin-left:auto" onclick="document.getElementById('loc-banner').classList.remove('show')">✕</button>
   </div>
   <div class="card">
     <label class="lbl" id="lbl-role">ROLE TITLE (OPTIONAL)</label>
@@ -291,7 +311,7 @@ input[type=text]{height:44px;font-size:13px;font-weight:500;resize:none}
   </div>
   <div class="ats-row" id="ats-pre" style="display:none">
     <div class="ats-box" style="border-color:rgba(59,130,246,.22);background:var(--blue-g)"><div class="ats-v" id="ats-w" style="color:var(--blue-l)">—</div><div class="ats-l" id="ats-lw">CV Words</div></div>
-    <div class="ats-box" style="border-color:rgba(245,158,11,.22);background:rgba(245,158,11,.07)"><div class="ats-v" id="ats-k" style="color:var(--amber)">—</div><div class="ats-l" id="ats-lk">Keywords Matched</div></div>
+    <div class="ats-box" style="border-color:rgba(245,158,11,.22);background:rgba(245,158,11,.07)"><div class="ats-v" id="ats-k" style="color:var(--amber)">—</div><div class="ats-l" id="ats-lk">Keywords</div></div>
     <div class="ats-box" style="border-color:rgba(34,197,94,.22);background:var(--green-g)"><div class="ats-v" id="ats-l" style="color:var(--green)">—</div><div class="ats-l" id="ats-ll">Length Score</div></div>
   </div>
   <div class="row-e">
@@ -363,7 +383,7 @@ input[type=text]{height:44px;font-size:13px;font-weight:500;resize:none}
   </div>
   <div class="err-box" id="int-err">
     <span>⚠</span><span id="int-err-msg">Connection issue. Please retry.</span>
-    <button style="margin-left:auto;background:transparent;border:1px solid rgba(239,68,68,.3);color:#FCA5A5;border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:'Cairo',sans-serif" onclick="retryInt()" id="retry-btn">Retry</button>
+    <button style="margin-left:auto;background:transparent;border:1px solid rgba(239,68,68,.3);color:#FCA5A5;border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:'Cairo',sans-serif" onclick="retryInt()">Retry</button>
   </div>
   <div class="chat-win" id="chat"></div>
   <div class="inp-row">
@@ -400,25 +420,26 @@ let jdTxt='',cvTxt='',cvEnh='',roleTxt='',analysis='';
 let origScore=null,newScore=null;
 let msgs=[],qCount=0,reportTxt='';
 let lastFailed=null,pipeTimer=null;
+let geminiApiKey=localStorage.getItem('gemini_api_key')||'';
 
 // ═══ REGIONS ═════════════════════════════════════
 const REGIONS={
-  'Iraq':{roles:['Senior Software Engineer','Operations Manager','Data Analyst','Project Coordinator'],companies:['Zain Telecom','Asiacell','National Bank of Iraq','USAID Partners'],areas:['Karrada','Mansour District','Erbil City Centre','Basra Corniche']},
-  'United Arab Emirates':{roles:['Business Development Manager','Full Stack Developer','Financial Analyst','Marketing Director'],companies:['Emirates NBD','Etisalat (e&)','DP World','Emaar Properties'],areas:['Dubai Marina','Business Bay','DIFC','Al Reem Island']},
-  'Saudi Arabia':{roles:['Project Manager','Civil Engineer','Data Scientist','HR Business Partner'],companies:['Saudi Aramco','STC','Al Rajhi Bank','SABIC'],areas:['Riyadh KAFD','Jeddah Corniche','Al Khobar','Dhahran']},
-  'United Kingdom':{roles:['Product Manager','Senior DevOps Engineer','Investment Analyst','UX Designer'],companies:['HSBC','Barclays','BP','GSK'],areas:['Canary Wharf','Shoreditch','Manchester City Centre','Edinburgh New Town']},
-  'Germany':{roles:['Software Architect','Business Analyst','ML Engineer','Manufacturing Engineer'],companies:['SAP','Siemens','BMW','Deutsche Bank'],areas:['Berlin Mitte','Munich Maxvorstadt','Hamburg HafenCity','Frankfurt Westend']},
-  'United States':{roles:['Senior Software Engineer','Product Manager','Data Scientist','Cloud Architect'],companies:['Google','Amazon','Microsoft','Salesforce'],areas:['Silicon Valley','Seattle SLU','New York Midtown','Austin Tech Corridor']},
-  'India':{roles:['Full Stack Developer','Business Analyst','DevOps Engineer','Product Manager'],companies:['Tata Consultancy Services','Infosys','Wipro','HCL Technologies'],areas:['Bangalore Whitefield','Hyderabad HITEC City','Mumbai BKC','Pune Hinjewadi']},
-  'Singapore':{roles:['Fintech Developer','Risk Analyst','Data Engineer','Cybersecurity Specialist'],companies:['DBS Bank','Grab','Sea Limited','Singtel'],areas:['Marina Bay','One-North','Tanjong Pagar','Jurong East']},
-  'default':{roles:['Software Engineer','Product Manager','Data Analyst','Operations Manager'],companies:['Accenture','Deloitte','IBM','Oracle'],areas:['City Centre','Business District','Tech Quarter','Financial Hub']}
+  'Iraq':{roles:['Senior Software Engineer','Operations Manager','Data Analyst','Project Coordinator'],companies:['Zain Telecom','Asiacell','National Bank of Iraq','USAID Partners'],areas:['Karrada','Green Zone','Business District']},
+  'United Arab Emirates':{roles:['Business Development Manager','Full Stack Developer','Financial Analyst','Marketing Director'],companies:['Emirates NBD','Etisalat (e&)','DP World','Emaar Properties'],areas:['Dubai Marina','DIFC','Abu Dhabi Corniche']},
+  'Saudi Arabia':{roles:['Project Manager','Civil Engineer','Data Scientist','HR Business Partner'],companies:['Saudi Aramco','STC','Al Rajhi Bank','SABIC'],areas:['Riyadh KAFD','Jeddah Corniche','Al Khobar']},
+  'United Kingdom':{roles:['Product Manager','Senior DevOps Engineer','Investment Analyst','UX Designer'],companies:['HSBC','Barclays','BP','GSK'],areas:['Canary Wharf','Shoreditch','Manchester City Centre']},
+  'Germany':{roles:['Software Architect','Business Analyst','ML Engineer','Manufacturing Engineer'],companies:['SAP','Siemens','BMW','Deutsche Bank'],areas:['Berlin Mitte','Munich Maxvorstadt','Hamburg']},
+  'United States':{roles:['Senior Software Engineer','Product Manager','Data Scientist','Cloud Architect'],companies:['Google','Amazon','Microsoft','Salesforce'],areas:['Silicon Valley','Seattle SLU','NYC Midtown']},
+  'India':{roles:['Full Stack Developer','Business Analyst','DevOps Engineer','Product Manager'],companies:['Tata Consultancy Services','Infosys','Wipro','HCL Technologies'],areas:['Bangalore Whitefield','Mumbai BKC','Hyderabad']},
+  'Singapore':{roles:['Fintech Developer','Risk Analyst','Data Engineer','Cybersecurity Specialist'],companies:['DBS Bank','Grab','Sea Limited','Singtel'],areas:['Marina Bay','One-North','Tanjong Pagar']},
+  'default':{roles:['Software Engineer','Product Manager','Data Analyst','Operations Manager'],companies:['Accenture','Deloitte','IBM','Oracle'],areas:['City Centre','Business District','Tech Quarter']}
 };
 const regionData=c=>REGIONS[c]||REGIONS['default'];
 
 // ═══ STRINGS ═════════════════════════════════════
 const S={
-  en:{navTitle:'Interview Architect',s0Title:'Upload Job Description & Candidate CV',s0Sub:'Align · Enhance · Interview · Report',lblRole:'ROLE TITLE (OPTIONAL)',lblJd:'📋 JOB DESCRIPTION',lblCv:'📄 CANDIDATE CV',jdPh:'Paste the full job description…',cvPh:'Paste the candidate\'s CV…',rolePh:'Suggested from your location…',atsLw:'CV Words',atsLk:'Keywords Matched',atsLl:'Length Score',analyzeTxt:'Analyze & Enhance CV →',enH:'CV Enhancement Report',enSub:'Review analysis · use rewritten CV · proceed to interview',scL1:'ORIGINAL',scL2:'ENHANCED',scL3:'GAIN',scS1:'Before rewrite',scS2:'After rewrite',scS3:'pts improvement',tb0:'Gap Analysis',tb1:'Rewritten CV',anaLoad:' Analyzing CV…',rwLoad:' Rewriting CV…',notifyTxt:'CV rewritten to maximize ATS score.',copyCv:'Copy Enhanced CV',useCv:'Use for Interview ✓',back:'Back',startTxt:'Start Interview Agent →',intTitle:'Interview Agent',progLbl:'Progress',sendLbl:'SEND',qRemTxt:'questions remaining',repTitle:'Evaluation Report',repSub:'Competency assessment with logic references',newInt:'New Interview',copyRep:'Copy Report',langBtn:'العربية',sl:['Upload','Enhance','Interview','Report'],plTitleTxt:'Processing your CV…',ps1:'Parsing job requirements…',ps2:'Scoring CV against ATS criteria…',ps3:'Rewriting CV for maximum match…',ps4:'Finalising enhancement report…',retryBtn:'Retry',intErrMsg:'Connection issue. Please retry.',ansPh:'Type your answer… (Enter to send)'},
-  ar:{navTitle:'مُهندس المقابلات',s0Title:'ارفع الوصف الوظيفي والسيرة الذاتية',s0Sub:'توافق · تحسين · مقابلة · تقرير',lblRole:'المسمى الوظيفي (اختياري)',lblJd:'📋 الوصف الوظيفي',lblCv:'📄 السيرة الذاتية',jdPh:'الصق الوصف الوظيفي…',cvPh:'الصق السيرة الذاتية…',rolePh:'سيتم الاقتراح بناءً على موقعك…',atsLw:'كلمات السيرة',atsLk:'الكلمات المفتاحية',atsLl:'درجة الطول',analyzeTxt:'تحليل وتحسين السيرة ←',enH:'تقرير تحسين السيرة',enSub:'راجع التحليل ثم انتقل للمقابلة',scL1:'الدرجة الأصلية',scL2:'الدرجة المحسّنة',scL3:'الفارق',scS1:'قبل التحسين',scS2:'بعد التحسين',scS3:'نقطة تحسين',tb0:'تحليل الثغرات',tb1:'السيرة المحسّنة',anaLoad:' تحليل السيرة…',rwLoad:' إعادة كتابة السيرة…',notifyTxt:'تمت إعادة كتابة السيرة.',copyCv:'نسخ السيرة المحسّنة',useCv:'استخدم للمقابلة ✓',back:'رجوع',startTxt:'← ابدأ وكيل المقابلة',intTitle:'وكيل المقابلة',progLbl:'التقدم',sendLbl:'إرسال',qRemTxt:'أسئلة متبقية',repTitle:'تقرير التقييم',repSub:'تقييم الكفاءة مع مراجع منطقية',newInt:'مقابلة جديدة',copyRep:'نسخ التقرير',langBtn:'English',sl:['رفع','تحسين','مقابلة','تقرير'],plTitleTxt:'جارٍ معالجة سيرتك…',ps1:'تحليل متطلبات الوظيفة…',ps2:'تقييم السيرة…',ps3:'إعادة كتابة السيرة…',ps4:'إنهاء تقرير التحسين…',retryBtn:'إعادة المحاولة',intErrMsg:'مشكلة في الاتصال.',ansPh:'اكتب إجابتك… (Enter للإرسال)'}
+  en:{navTitle:'Interview Architect',s0Title:'Upload Job Description & Candidate CV',s0Sub:'Align · Enhance · Interview · Report',lblRole:'ROLE TITLE (OPTIONAL)',lblJd:'📋 JOB DESCRIPTION',lblCv:'📄 CANDIDATE CV',atsLw:'CV Words',atsLk:'Keywords',atsLl:'Length Score',analyzeTxt:'Analyze & Enhance CV →',anaLoad:'Analyzing…',rwLoad:'Rewriting CV…',rolePh:'Suggested from your location…',jdPh:'Paste the full job description…',cvPh:'Paste the candidate\'s CV…',ansPh:'Type your answer…',sl:['Upload','Enhance','Interview','Report'],notifyTxt:'CV rewritten to maximize ATS score.',copyCv:'Copy Enhanced CV',useCv:'Use for Interview ✓',backTxt:'Back',startTxt:'Start Interview Agent →',intErrMsg:'Connection issue. Please retry.',progLbl:'Progress',qRemTxt:'questions remaining'},
+  ar:{navTitle:'مُهندس المقابلات',s0Title:'ارفع الوصف الوظيفي والسيرة الذاتية',s0Sub:'توافق · تحسين · مقابلة · تقرير',lblRole:'ROLE TITLE (OPTIONAL)',lblJd:'📋 وصف الوظيفة',lblCv:'📄 السيرة الذاتية',atsLw:'كلمات السيرة',atsLk:'الكلمات الرئيسية',atsLl:'درجة الطول',analyzeTxt:'تحليل وتحسين السيرة →',anaLoad:'جارٍ التحليل…',rwLoad:'جارٍ إعادة كتابة السيرة…',rolePh:'مقترحة من موقعك…',jdPh:'الصق وصف الوظيفة الكامل…',cvPh:'الصق سيرتك الذاتية…',ansPh:'اكتب إجابتك…',sl:['الرفع','التحسين','المقابلة','التقرير'],notifyTxt:'تمت إعادة كتابة السيرة بنجاح.',copyCv:'نسخ السيرة المحسّنة',useCv:'استخدام في المقابلة ✓',backTxt:'رجوع',startTxt:'ابدأ مقابلة المحاور →',intErrMsg:'مشكلة في الاتصال. حاول مرة أخرى.',progLbl:'التقدم',qRemTxt:'أسئلة متبقية'}
 };
 const T=k=>S[lang][k]||k;
 
@@ -427,7 +448,7 @@ function applyLang(){
   document.documentElement.lang=lang;
   document.body.style.direction=isAr?'rtl':'ltr';
   document.body.style.textAlign=isAr?'right':'left';
-  const m={'nav-title':'navTitle','s0-title':'s0Title','s0-sub':'s0Sub','lbl-role':'lblRole','lbl-jd':'lblJd','lbl-cv':'lblCv','ats-lw':'atsLw','ats-lk':'atsLk','ats-ll':'atsLl','analyze-txt':'analyzeTxt','en-h':'enH','en-sub':'enSub','sc-l1':'scL1','sc-l2':'scL2','sc-l3':'scL3','sc-s1':'scS1','sc-s2':'scS2','sc-s3':'scS3','tb0t':'tb0','tb1t':'tb1','ana-load':'anaLoad','rw-load':'rwLoad','notify-txt':'notifyTxt','copy-cv':'copyCv','use-cv':'useCv','back-txt':'back','start-txt':'startTxt','int-title':'intTitle','prog-lbl':'progLbl','send-lbl':'sendLbl','q-rem-txt':'qRemTxt','rep-title':'repTitle','rep-sub':'repSub','new-int':'newInt','copy-rep':'copyRep','lang-btn':'langBtn','pl-title-txt':'plTitleTxt','ps1':'ps1','ps2':'ps2','ps3':'ps3','ps4':'ps4','retry-btn':'retryBtn','int-err-msg':'intErrMsg'};
+  const m={'nav-title':'navTitle','s0-title':'s0Title','s0-sub':'s0Sub','lbl-role':'lblRole','lbl-jd':'lblJd','lbl-cv':'lblCv','ats-lw':'atsLw','ats-lk':'atsLk','ats-ll':'atsLl','analyze-txt':'analyzeTxt','ana-load':'anaLoad','rw-load':'rwLoad','notify-txt':'notifyTxt','copy-cv':'copyCv','use-cv':'useCv','back-txt':'backTxt','start-txt':'startTxt','new-int':'newInt','copy-rep':'copyRep','prog-lbl':'progLbl','q-rem-txt':'qRemTxt'};
   Object.entries(m).forEach(([id,k])=>{const e=document.getElementById(id);if(e)e.textContent=T(k);});
   document.getElementById('role').placeholder=T('rolePh');
   document.getElementById('jd').placeholder=T('jdPh');
@@ -437,6 +458,19 @@ function applyLang(){
   updProg();
 }
 function toggleLang(){lang=lang==='en'?'ar':'en';applyLang();}
+
+// ═══ API KEY MANAGEMENT ═══════════════════════
+function setApiKey(){
+  const key=document.getElementById('api-key-input').value.trim();
+  if(!key){alert('Please paste your Gemini API key');return;}
+  localStorage.setItem('gemini_api_key',key);
+  geminiApiKey=key;
+  document.getElementById('api-banner').classList.add('ok');
+  document.getElementById('api-key-input').value='';
+  document.getElementById('api-key-input').placeholder='✓ API key saved';
+  setTimeout(()=>document.getElementById('api-banner').style.display='none',2000);
+}
+if(geminiApiKey){document.getElementById('api-banner').classList.add('ok');document.getElementById('api-banner').style.display='none';}
 
 // ═══ SILENT GEOLOCATION ══════════════════════════
 function initSilentLocation(){
@@ -469,7 +503,7 @@ document.getElementById('cv').addEventListener('input',onInput);
 document.getElementById('answer').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendAnswer();}});
 function onInput(){
   const j=document.getElementById('jd').value.trim(),c=document.getElementById('cv').value.trim();
-  document.getElementById('analyze-btn').disabled=!(j&&c);
+  document.getElementById('analyze-btn').disabled=!(j&&c)||!geminiApiKey;
   document.getElementById('clr-btn').style.display=(j||c)?'inline-flex':'none';
   if(j&&c){
     const w=c.split(/\s+/).filter(Boolean).length;
@@ -510,25 +544,26 @@ function renderMD(text,el){
   });
 }
 
-// ═══ CLAUDE API (FIXED: timeout + error handling + compression) ═
-async function callClaude(sys,user,hist=[]){
+// ═══ GEMINI API ═══════════════════════════════════
+async function callGemini(sys,user,hist=[]){
+  if(!geminiApiKey){throw new Error('API key not set. Set it in the banner above.');}
   const ctrl=new AbortController();
-  const tid=setTimeout(()=>ctrl.abort(),45000); // Reduced to 45s
+  const tid=setTimeout(()=>ctrl.abort(),45000);
   try{
-    // Truncate large inputs to prevent payload overflow
-    const maxLen=8000;
+    const maxLen=6000;
     const userTrunc=user.length>maxLen?user.slice(0,maxLen)+'...[truncated]':user;
+    const messages=[];
+    hist.forEach(msg=>{messages.push({role:msg.role==='user'?'user':'model',parts:[{text:msg.content}]});});
+    messages.push({role:'user',parts:[{text:userTrunc}]});
     
     const payload={
-      model:'claude-sonnet-4-20250514',
-      max_tokens:700,
-      system:sys,
-      messages:[...hist,{role:'user',content:userTrunc}]
+      system:{parts:[{text:sys}]},
+      contents:messages,
+      generationConfig:{maxOutputTokens:800,temperature:0.7}
     };
     
-    console.log('[API] Sending request, payload size:',JSON.stringify(payload).length,'bytes');
-    
-    const r=await fetch('https://api.anthropic.com/v1/messages',{
+    const url=`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${geminiApiKey}`;
+    const r=await fetch(url,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       signal:ctrl.signal,
@@ -539,28 +574,23 @@ async function callClaude(sys,user,hist=[]){
     
     if(!r.ok){
       const e=await r.json();
-      const errMsg=e.error?.message||'API error '+r.status;
-      console.error('[API] Error response:',errMsg,e);
+      const errMsg=e.error?.message||`API error ${r.status}`;
+      console.error('[Gemini] Error:',errMsg);
       throw new Error(errMsg);
     }
     
     const d=await r.json();
-    const result=d.content?.find(b=>b.type==='text')?.text||'';
-    console.log('[API] Success, response length:',result.length);
+    const result=d.candidates?.[0]?.content?.parts?.[0]?.text||'';
+    if(!result)throw new Error('Empty response from API');
+    console.log('[Gemini] Success, response length:',result.length);
     return result;
     
   }catch(e){
     clearTimeout(tid);
-    
-    // Detailed console logging for debugging
     if(e.name==='AbortError'){
-      console.error('[API] Request timeout (45s) — payload too large or network slow');
-      throw new Error('Request timeout. Try shorter CV/JD.');
-    }else if(e instanceof TypeError){
-      console.error('[API] Network error:',e.message);
-      throw new Error('Network error — check CORS, internet, API key.');
+      throw new Error('Request timeout. Try shorter CV/JD or retry.');
     }else{
-      console.error('[API] Exception:',e.message);
+      console.error('[Gemini] Exception:',e.message);
       throw e;
     }
   }
@@ -579,30 +609,25 @@ const SYS_ANA=`You are a Senior Technical Recruiter and ATS specialist. Analyze 
 - [risk area]
 Be concise. Facts only.`;
 
-const SYS_RW=`You are an expert ATS CV writer. Rewrite the ENTIRE CV to maximize ATS match. Keep all real facts. Use action verbs. Quantify results. Mirror JD keywords. Lead with targeted summary. Order: Summary→Skills→Experience→Education. Output full rewritten CV as plain text. Final line: NEW ALIGNMENT SCORE: [0-100]`;
+const SYS_RW=`You are an expert ATS CV writer. Rewrite the ENTIRE CV to maximize ATS match. Keep all real facts. Use action verbs. Quantify results. Mirror JD keywords. Lead with targeted summary. Format cleanly.
+NEW ALIGNMENT SCORE: [0-100]
+Then output the rewritten CV.`;
 
 const SYS_INT=`You are a Senior Technical Recruiter conducting a structured job interview.
-RULES: 1) One question per response. 2) Base on JD/CV/gaps. 3) Validate against standards. 4) One clarifying follow-up if ambiguous; mark Inconclusive if still unclear. 5) Professional tone. 6) After 8 answers, output report.
+RULES: 1) One question per response. 2) Base on JD/CV/gaps. 3) Validate against standards. 4) Professional tone. 5) After 8 answers output INTERVIEW_COMPLETE
 SEQUENCE: Q1=background · Q2-Q3=technical · Q4=situational · Q5=behavioral(STAR) · Q6=gap probing · Q7=advanced · Q8=self-assessment
 After 8 answers output:
 INTERVIEW_COMPLETE
 ## CANDIDATE EVALUATION REPORT
-### ROLE: [from JD]
-### DATE: ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}
-### QUESTIONS ASKED: 8
----
 ### TECHNICAL PROFICIENCY
 Score: [0-10] | Weight: 40%
 [Assessment]
-Logic Reference: [standard]
 ### COMMUNICATION & SOFT SKILLS
 Score: [0-10] | Weight: 25%
 [Assessment]
-Logic Reference: [framework]
 ### SITUATIONAL JUDGMENT
 Score: [0-10] | Weight: 20%
 [Assessment]
-Logic Reference: [framework]
 ### ROLE FIT
 Score: [0-10] | Weight: 15%
 [Assessment]
@@ -610,12 +635,8 @@ Score: [0-10] | Weight: 15%
 ### STRENGTHS
 - [evidence-based]
 - [evidence-based]
-- [evidence-based]
 ### GAPS & CONCERNS
 - [with evidence]
-- [with evidence]
-### INCONCLUSIVE AREAS
-- [or "None identified"]
 ---
 ### FINAL COMPETENCY SCORE: [weighted 0-100]
 ### RECOMMENDATION: [STRONG HIRE / HIRE / CONSIDER / NO HIRE]
@@ -625,7 +646,7 @@ Score: [0-10] | Weight: 15%
 function startPipeline(){
   document.getElementById('pipeline').style.display='block';
   const dots=['pd1','pd2','pd3','pd4'];let i=0;
-  pipeTimer=setInterval(()=>{if(i>0)document.getElementById(dots[i-1]).className='pl-dot done';if(i<dots.length){document.getElementById(dots[i]).className='pl-dot active';document.getElementById('pl-fill').style.width=((i+1)/4*75)+'%';}i++;if(i>dots.length)clearInterval(pipeTimer);},900);
+  pipeTimer=setInterval(()=>{if(i>0)document.getElementById(dots[i-1]).className='pl-dot done';if(i<dots.length){document.getElementById(dots[i]).className='pl-dot active';document.getElementById('pl-fill').style.width=((i+1)/dots.length*100)+'%';}i++;if(i>dots.length)clearInterval(pipeTimer);},800);
 }
 function endPipeline(ok){
   clearInterval(pipeTimer);
@@ -634,7 +655,7 @@ function endPipeline(ok){
   setTimeout(()=>{document.getElementById('pipeline').style.display='none';},800);
 }
 
-// ═══ ENHANCEMENT (FIXED: sequential calls) ═══════
+// ═══ ENHANCEMENT ═════════════════════════════════
 async function runEnhancement(){
   jdTxt=document.getElementById('jd').value.trim();
   cvTxt=document.getElementById('cv').value.trim();
@@ -645,11 +666,10 @@ async function runEnhancement(){
   cEl.innerHTML=`<div style="display:flex;gap:9px;align-items:center;color:var(--tx3)"><div class="spin"></div><span>${T('rwLoad')}</span></div><div class="cv-badge">ENHANCED</div>`;
   const prompt=`JOB DESCRIPTION:\n${jdTxt}\n\nCANDIDATE CV:\n${cvTxt}`;
   try{
-    // FIXED: sequential, not parallel
-    const aRes=await callClaude(SYS_ANA,prompt);
+    const aRes=await callGemini(SYS_ANA,prompt);
     analysis=aRes;renderMD(analysis,aEl);
     const oM=analysis.match(/ALIGNMENT SCORE:\s*(\d+)/);origScore=oM?parseInt(oM[1]):null;
-    const rRes=await callClaude(SYS_RW,prompt);
+    const rRes=await callGemini(SYS_RW,prompt);
     const nM=rRes.match(/NEW ALIGNMENT SCORE:\s*(\d+)/);newScore=nM?parseInt(nM[1]):null;
     cvEnh=rRes.replace(/NEW ALIGNMENT SCORE:\s*\d+/,'').trim();
     cEl.textContent=cvEnh;
@@ -667,7 +687,7 @@ async function runEnhancement(){
 function copyCv(){navigator.clipboard.writeText(cvEnh).then(()=>{const b=event.target;const o=b.textContent;b.textContent='✓ Copied!';setTimeout(()=>b.textContent=o,2000);});}
 function useCv(){cvTxt=cvEnh;document.getElementById('cv').value=cvEnh;const b=event.target;const o=b.textContent;b.textContent='✓ Applied';setTimeout(()=>b.textContent=o,2000);}
 
-// ═══ INTERVIEW (FIXED: correct message history) ══
+// ═══ INTERVIEW ═══════════════════════════════════
 async function startInterview(){
   jumpTo(2,true);
   document.getElementById('chat').innerHTML='';msgs=[];qCount=0;
@@ -675,9 +695,8 @@ async function startInterview(){
   document.getElementById('int-err').classList.remove('show');
   updProg();lastFailed='interview_start';addTyping();
   try{
-    // FIXED: context as first user message → valid alternating history
     const ctxMsg=`BEGIN INTERVIEW.\nJOB DESCRIPTION:\n${jdTxt}\nCANDIDATE CV:\n${cvTxt}\nGAP ANALYSIS:\n${analysis}\nGreet the candidate briefly, name the role, then ask Question 1.`;
-    const first=await callClaude(SYS_INT,ctxMsg,[]);
+    const first=await callGemini(SYS_INT,ctxMsg,[]);
     removeTyping();
     if(!first||!first.trim())throw new Error('Empty response from interview agent.');
     msgs=[{role:'user',content:ctxMsg},{role:'assistant',content:first}];
@@ -696,7 +715,7 @@ async function sendAnswer(){
   addMsg('user',ans);msgs.push({role:'user',content:ans});addTyping();
   try{
     const hist=msgs.slice(0,-1);
-    const resp=await callClaude(SYS_INT,ans,hist);
+    const resp=await callGemini(SYS_INT,ans,hist);
     removeTyping();
     if(!resp||!resp.trim())throw new Error('Empty response — please retry.');
     if(resp.includes('INTERVIEW_COMPLETE')){
@@ -755,11 +774,11 @@ function showReport(){
   const score=sM?parseInt(sM[1]):null;const rec=rM?rM[1].trim():null;
   const sc=score?(score>=70?'var(--green)':score>=50?'var(--amber)':'var(--red)'):'var(--tx2)';
   const rc=rec?(rec.includes('STRONG')?'var(--green)':rec.includes('HIRE')&&!rec.includes('NO')?'var(--green-l)':rec.includes('CONSIDER')?'var(--amber)':'var(--red)'):'var(--tx2)';
-  document.getElementById('rep-hero').innerHTML=score!==null?`<div class="rep-box"><div class="rep-lbl">COMPETENCY SCORE</div><div class="rep-score" style="color:${sc}">${score}</div><div style="font-size:10px;color:var(--tx3);margin-top:4px;font-family:var(--mono)">out of 100</div></div><div class="rep-box" style="display:flex;flex-direction:column;justify-content:center;align-items:center"><div class="rep-lbl">RECOMMENDATION</div><div style="font-size:16px;font-weight:800;color:${rc}">${rec||'—'}</div></div>`:'';
+  document.getElementById('rep-hero').innerHTML=score!==null?`<div class="rep-box"><div class="rep-lbl">COMPETENCY SCORE</div><div class="rep-score" style="color:${sc}">${score}</div><div style="font-size:10px;color:var(--tx3);margin-top:4px">/100</div></div><div class="rep-box"><div class="rep-lbl">RECOMMENDATION</div><div class="rep-score" style="color:${rc};font-size:20px">${rec}</div></div>`:'';
   renderMD(reportTxt,document.getElementById('report-out'));
 }
 function copyReport(){navigator.clipboard.writeText(reportTxt).then(()=>{const b=event.target;const o=b.textContent;b.textContent='✓ Copied!';setTimeout(()=>b.textContent=o,2000);});}
-function resetAll(){jdTxt='';cvTxt='';cvEnh='';roleTxt='';analysis='';origScore=null;newScore=null;msgs=[];qCount=0;reportTxt='';lastFailed=null;['jd','cv','role'].forEach(id=>document.getElementById(id).value='');document.getElementById('analyze-btn').disabled=true;document.getElementById('clr-btn').style.display='none';document.getElementById('ats-pre').style.display='none';document.getElementById('sc-wrap').style.display='none';document.getElementById('cv-notify').classList.remove('show');document.getElementById('int-err').classList.remove('show');jumpTo(0,true);}
+function resetAll(){jdTxt='';cvTxt='';cvEnh='';roleTxt='';analysis='';origScore=null;newScore=null;msgs=[];qCount=0;reportTxt='';lastFailed=null;['jd','cv','role'].forEach(id=>document.getElementById(id).value='');jumpTo(0,true);document.getElementById('ats-pre').style.display='none';document.getElementById('clr-btn').style.display='none';}
 
 // ═══ INIT ════════════════════════════════════════
 applyLang();
